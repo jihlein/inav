@@ -46,6 +46,9 @@
 #define TAIL_SERVO_FDBK_MIN           (0)
 #define TAIL_SERVO_FDBK_MAX           (2)
 
+#define TAIL_SERVO_DIRECTION_MIN      (0)
+#define TAIL_SERVO_DIRECTION_MAX      (1)
+
 #define TAIL_SERVO_MAX_ADC_MIN        (0)
 #define TAIL_SERVO_MAX_ADC_MAX        (65535)
 
@@ -72,6 +75,7 @@ typedef struct triflightConfig_s {
     uint16_t tri_motor_acceleration;
     int16_t  tri_servo_angle_at_max;
     uint8_t  tri_servo_feedback;
+    uint8_t  tri_servo_direction;
     uint16_t tri_servo_max_adc;
     uint16_t tri_servo_mid_adc;
     uint16_t tri_servo_min_adc;
@@ -88,6 +92,12 @@ typedef enum {
     TRI_SERVO_FB_RSSI,         // Feedback signal from RSSI ADC
     TRI_SERVO_FB_CURRENT,      // Feedback signal from CURRENT ADC
 } triServoFeedbackSource_e;
+
+// Servo directions
+typedef enum {
+    TRI_SERVO_DIRECTION_NORMAL = 0,
+    TRI_SERVO_DIRECTION_REVERSED,
+} triServoDirection_e;
 
 uint16_t triGetCurrentServoAngle(void);
 int16_t  triGetMotorCorrection(uint8_t motorIndex);
