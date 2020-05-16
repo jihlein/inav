@@ -30,6 +30,7 @@
 #include "drivers/time.h"
 
 #include "fc/fc_core.h"
+#include "fc/rc_controls.h"
 #include "fc/rc_modes.h"
 
 #include "flight/mixer.h"
@@ -40,7 +41,6 @@
 #include "io/beeper.h"
 
 #include "sensors/gyro.h"
-
 
 
 
@@ -589,7 +589,7 @@ static void triTailTuneStep(servoParam_t *pServoConf, int16_t *pServoVal)
             // Prevent accidental arming in servo setup mode
             ENABLE_ARMING_FLAG(ARMING_DISABLED_TAILTUNE);
             
-			tailTune.mode        = TT_MODE_SERVO_SETUP;
+            tailTune.mode        = TT_MODE_SERVO_SETUP;
             tailTune.ss.servoVal = pServoConf->middle;
         }
     }
@@ -597,7 +597,7 @@ static void triTailTuneStep(servoParam_t *pServoConf, int16_t *pServoVal)
     switch (tailTune.mode)
     {
     case TT_MODE_THRUST_TORQUE:
-        tailTuneModeThrustTorque(&tailTune.tt, (THROTTLE_HIGH == calculateThrottleStatus()));
+        tailTuneModeThrustTorque(&tailTune.tt, (THROTTLE_HIGH == calculateThrottleStatus(THROTTLE_STATUS_TYPE_RC)));
         break;
     case TT_MODE_SERVO_SETUP:
         tailTuneModeServoSetup(&tailTune.ss, pServoConf, pServoVal);

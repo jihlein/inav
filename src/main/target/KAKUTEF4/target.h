@@ -23,7 +23,7 @@
  */
 
 #pragma once
-#if defined(KAKUTEF4V2) || defined(KAKUTEF4V2TRI)
+#if defined(KAKUTEF4V2)
 #   define TARGET_BOARD_IDENTIFIER "KTV2"
 #   define USBD_PRODUCT_STRING "KakuteF4-V2"
 #else
@@ -42,18 +42,13 @@
 #define GYRO_INT_EXTI            PC5
 #define USE_MPU_DATA_READY_SIGNAL
 
+#define USE_IMU_MPU6500
+#define IMU_MPU6500_ALIGN       CW270_DEG
 #define MPU6500_CS_PIN          PC4
 #define MPU6500_SPI_BUS         BUS_SPI1
 
-#define USE_GYRO
-#define USE_GYRO_MPU6500
-#define GYRO_MPU6500_ALIGN      CW270_DEG
 
-#define USE_ACC
-#define USE_ACC_MPU6500
-#define ACC_MPU6500_ALIGN       CW270_DEG
-
-#if defined(KAKUTEF4V2) || defined(KAKUTEF4V2TRI)
+#ifdef KAKUTEF4V2
 #   define USE_I2C
 #   define USE_I2C_DEVICE_1
 #   define I2C1_SCL                PB8        // SCL pad
@@ -68,6 +63,8 @@
 #   define USE_MAG_IST8310
 #   define USE_MAG_IST8308
 #   define USE_MAG_LIS3MDL
+
+#   define TEMPERATURE_I2C_BUS     BUS_I2C1
 
 #   define USE_BARO
 #   define BARO_I2C_BUS            BUS_I2C1
@@ -106,7 +103,7 @@
 #define UART6_RX_PIN            PC7
 #define UART6_TX_PIN            PC6
 
-#if defined(KAKUTEF4V2) || defined(KAKUTEF4V2TRI)
+#ifdef KAKUTEF4V2
 #   define USE_UART4
 #   define UART4_RX_PIN            PA1
 #   define UART4_TX_PIN            PA0
@@ -145,11 +142,10 @@
 #define ADC_CHANNEL_3_PIN           PC1
 
 #define USE_LED_STRIP
-#if !defined(KAKUTEF4V2TRI)
 #define WS2811_PIN                      PC8
-#else
-#define WS2811_PIN                      PA2
-#endif
+#define WS2811_DMA_HANDLER_IDENTIFER    DMA2_ST4_HANDLER
+#define WS2811_DMA_STREAM               DMA2_Stream4
+#define WS2811_DMA_CHANNEL              DMA_Channel_7
 
 #define VBAT_ADC_CHANNEL            ADC_CHN_1
 #define CURRENT_METER_ADC_CHANNEL   ADC_CHN_2
@@ -168,12 +164,11 @@
 #define TARGET_IO_PORTC 0xffff
 #define TARGET_IO_PORTD        (BIT(2))
 
-#if defined(KAKUTEF4V2TRI)
 #define USE_DSHOT
+#define USE_SERIALSHOT
 #define USE_ESC_SENSOR
-#endif
 
-#if defined(KAKUTEF4V2) || defined(KAKUTEF4V2TRI)
+#ifdef KAKUTEF4V2
 #   define MAX_PWM_OUTPUT_PORTS       4
 #else
 #   define MAX_PWM_OUTPUT_PORTS       6
