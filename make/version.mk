@@ -1,4 +1,4 @@
-FORKNAME		:= inav
+FORKNAME		:= trinav
 
 FC_VER_MAJOR	:= $(shell grep " FC_VERSION_MAJOR" src/main/build/version.h | awk '{print $$3}' )
 FC_VER_MINOR	:= $(shell grep " FC_VERSION_MINOR" src/main/build/version.h | awk '{print $$3}' )
