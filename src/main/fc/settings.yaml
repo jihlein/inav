@@ -146,6 +146,8 @@ tables:
     enum: osd_ahi_style_e
   - name: tri_servo_feedback
     values: ["VIRTUAL", "RSSI", "CURRENT"]
+  - name: tri_servo_direction
+    values: ["NORMAL", "REVERSED"]
 
 groups:
   - name: PG_GYRO_CONFIG
@@ -2218,6 +2220,12 @@ groups:
         table: tri_servo_feedback
         min: TAIL_SERVO_FDBK_MIN
         max: TAIL_SERVO_FDBK_MAX
+        type: uint8_t
+      - name: tri_servo_direction
+        field: tri_servo_direction
+        table: tri_servo_direction
+        min: TAIL_SERVO_DIRECTION_MIN
+        max: TAIL_SERVO_DIRECTION_MAX
         type: uint8_t
       - name: tri_servo_max_adc
         field: tri_servo_max_adc
