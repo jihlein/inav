@@ -48,7 +48,7 @@ typedef enum {
     FEATURE_RSSI_ADC = 1 << 15,
     FEATURE_LED_STRIP = 1 << 16,
     FEATURE_DASHBOARD = 1 << 17,
-    FEATURE_UNUSED_7 = 1 << 18,         // Unused in INAV
+    FEATURE_TRIFLIGHT = 1 << 18,        // Triflight features enabled
     FEATURE_BLACKBOX = 1 << 19,
     FEATURE_UNUSED_10 = 1 << 20,        // was FEATURE_CHANNEL_FORWARDING
     FEATURE_TRANSPONDER = 1 << 21,

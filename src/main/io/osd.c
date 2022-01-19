@@ -831,7 +831,9 @@ static const char * osdArmingDisabledReasonMessage(void)
             return OSD_MESSAGE_STR(OSD_MSG_NO_PREARM);
         case ARMING_DISABLED_DSHOT_BEEPER:
             return OSD_MESSAGE_STR(OSD_MSG_DSHOT_BEEPER);
-            // Cases without message
+        case ARMING_DISABLED_TAILTUNE:
+            return OSD_MESSAGE_STR("TAILTUNE");
+        // Cases without message
         case ARMING_DISABLED_CMS_MENU:
             FALLTHROUGH;
         case ARMING_DISABLED_OSD_MENU:
