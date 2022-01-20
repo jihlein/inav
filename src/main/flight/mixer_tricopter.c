@@ -865,7 +865,7 @@ static void tailTuneModeServoSetup(struct servoSetup_t *pSS, servoParam_t *pServ
             else if (pSS->cal.state == SS_C_CALIB_SPEED)
             {
                 pSS->state = SS_IDLE;
-                pSS->cal.subState = SS_C_IDLE;
+                pSS->cal.subState = SS_C_MIN; // HJI SS_C_IDLE;
                 
                 beeper(BEEPER_READY_BEEP);
 
@@ -890,7 +890,7 @@ static void tailTuneModeServoSetup(struct servoSetup_t *pSS, servoParam_t *pServ
                              * Most likely the feedback signal is not connected.
                              */
                             pSS->state        = SS_IDLE;
-                            pSS->cal.subState = SS_C_IDLE;
+                            pSS->cal.subState = SS_C_MIN; // HJI SS_C_IDLE;
                             
                             beeper(BEEPER_ACTION_FAIL);
 
