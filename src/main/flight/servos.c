@@ -253,147 +253,147 @@ void servoMixer(float dT)
 {
     int16_t input[INPUT_SOURCE_COUNT]; // Range [-500:+500]
 
+    if (FLIGHT_MODE(MANUAL_MODE)) {
+        input[INPUT_STABILIZED_ROLL] = rcCommand[ROLL];
+        input[INPUT_STABILIZED_PITCH] = rcCommand[PITCH];
+        input[INPUT_STABILIZED_YAW] = rcCommand[YAW];
+    } else {
+        // Assisted modes (gyro only or gyro+acc according to AUX configuration in Gui
+        input[INPUT_STABILIZED_ROLL] = axisPID[ROLL];
+        input[INPUT_STABILIZED_PITCH] = axisPID[PITCH];
+        input[INPUT_STABILIZED_YAW] = axisPID[YAW];
+
+        // Reverse yaw servo when inverted in 3D mode only for multirotor and tricopter
+        if (feature(FEATURE_REVERSIBLE_MOTORS) && (rxGetChannelValue(THROTTLE) < PWM_RANGE_MIDDLE) &&
+        (mixerConfig()->platformType == PLATFORM_MULTIROTOR || mixerConfig()->platformType == PLATFORM_TRICOPTER)) {
+            input[INPUT_STABILIZED_YAW] *= -1;
+        }
+    }
+
+    input[INPUT_STABILIZED_ROLL_PLUS] = constrain(input[INPUT_STABILIZED_ROLL], 0, 1000);
+    input[INPUT_STABILIZED_ROLL_MINUS] = constrain(input[INPUT_STABILIZED_ROLL], -1000, 0);
+    input[INPUT_STABILIZED_PITCH_PLUS] = constrain(input[INPUT_STABILIZED_PITCH], 0, 1000);
+    input[INPUT_STABILIZED_PITCH_MINUS] = constrain(input[INPUT_STABILIZED_PITCH], -1000, 0);
+    input[INPUT_STABILIZED_YAW_PLUS] = constrain(input[INPUT_STABILIZED_YAW], 0, 1000);
+    input[INPUT_STABILIZED_YAW_MINUS] = constrain(input[INPUT_STABILIZED_YAW], -1000, 0);
+
+    input[INPUT_FEATURE_FLAPS] = FLIGHT_MODE(FLAPERON) ? servoConfig()->flaperon_throw_offset : 0;
+
+    input[INPUT_MAX] = 500;
+#ifdef USE_PROGRAMMING_FRAMEWORK
+    input[INPUT_GVAR_0] = constrain(gvGet(0), -1000, 1000);
+    input[INPUT_GVAR_1] = constrain(gvGet(1), -1000, 1000);
+    input[INPUT_GVAR_2] = constrain(gvGet(2), -1000, 1000);
+    input[INPUT_GVAR_3] = constrain(gvGet(3), -1000, 1000);
+    input[INPUT_GVAR_4] = constrain(gvGet(4), -1000, 1000);
+    input[INPUT_GVAR_5] = constrain(gvGet(5), -1000, 1000);
+    input[INPUT_GVAR_6] = constrain(gvGet(6), -1000, 1000);
+    input[INPUT_GVAR_7] = constrain(gvGet(7), -1000, 1000);
+#endif
+
+    if (IS_RC_MODE_ACTIVE(BOXCAMSTAB)) {
+        input[INPUT_GIMBAL_PITCH] = scaleRange(attitude.values.pitch, -900, 900, -500, +500);
+        input[INPUT_GIMBAL_ROLL] = scaleRange(attitude.values.roll, -1800, 1800, -500, +500);
+    } else {
+        input[INPUT_GIMBAL_PITCH] = 0;
+        input[INPUT_GIMBAL_ROLL] = 0;
+    }
+
+    input[INPUT_STABILIZED_THROTTLE] = mixerThrottleCommand - 1000 - 500;  // Since it derives from rcCommand or mincommand and must be [-500:+500]
+
+    // center the RC input value around the RC middle value
+    // by subtracting the RC middle value from the RC input value, we get:
+    // data - middle = input
+    // 2000 - 1500 = +500
+    // 1500 - 1500 = 0
+    // 1000 - 1500 = -500
+#define GET_RX_CHANNEL_INPUT(x) (rxGetChannelValue(x) - PWM_RANGE_MIDDLE)
+    input[INPUT_RC_ROLL]     = GET_RX_CHANNEL_INPUT(ROLL);
+    input[INPUT_RC_PITCH]    = GET_RX_CHANNEL_INPUT(PITCH);
+    input[INPUT_RC_YAW]      = GET_RX_CHANNEL_INPUT(YAW);
+    input[INPUT_RC_THROTTLE] = GET_RX_CHANNEL_INPUT(THROTTLE);
+    input[INPUT_RC_CH5]      = GET_RX_CHANNEL_INPUT(AUX1);
+    input[INPUT_RC_CH6]      = GET_RX_CHANNEL_INPUT(AUX2);
+    input[INPUT_RC_CH7]      = GET_RX_CHANNEL_INPUT(AUX3);
+    input[INPUT_RC_CH8]      = GET_RX_CHANNEL_INPUT(AUX4);
+    input[INPUT_RC_CH9]      = GET_RX_CHANNEL_INPUT(AUX5);
+    input[INPUT_RC_CH10]     = GET_RX_CHANNEL_INPUT(AUX6);
+    input[INPUT_RC_CH11]     = GET_RX_CHANNEL_INPUT(AUX7);
+    input[INPUT_RC_CH12]     = GET_RX_CHANNEL_INPUT(AUX8);
+    input[INPUT_RC_CH13]     = GET_RX_CHANNEL_INPUT(AUX9);
+    input[INPUT_RC_CH14]     = GET_RX_CHANNEL_INPUT(AUX10);
+    input[INPUT_RC_CH15]     = GET_RX_CHANNEL_INPUT(AUX11);
+    input[INPUT_RC_CH16]     = GET_RX_CHANNEL_INPUT(AUX12);
+#undef GET_RX_CHANNEL_INPUT
+
+    for (int i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
+        servo[i] = 0;
+    }
+
+    // mix servos according to rules
+    for (int i = 0; i < servoRuleCount; i++) {
+
+        /*
+         * Check if conditions for a rule are met, not all conditions apply all the time
+         */
+#ifdef USE_PROGRAMMING_FRAMEWORK
+        if (!logicConditionGetValue(currentServoMixer[i].conditionId)) {
+            continue; 
+        }
+#endif
+
+        const uint8_t target = currentServoMixer[i].targetChannel;
+        const uint8_t from = currentServoMixer[i].inputSource;
+
+        /*
+         * Apply mixer speed limit. 1 [one] speed unit is defined as 10us/s:
+         * 0 = no limiting
+         * 1 = 10us/s -> full servo sweep (from 1000 to 2000) is performed in 100s
+         * 10 = 100us/s -> full sweep (from 1000 to 2000)  is performed in 10s
+         * 100 = 1000us/s -> full sweep in 1s
+         */
+        int16_t inputLimited = (int16_t) rateLimitFilterApply4(&servoSpeedLimitFilter[i], input[from], currentServoMixer[i].speed * 10, dT);
+
+        servo[target] += ((int32_t)inputLimited * currentServoMixer[i].rate) / 100;
+    }
+
+    for (int i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
+
+        /*
+         * Apply servo rate
+         */
+        servo[i] = ((int32_t)servoParams(i)->rate * servo[i]) / 100L;
+
+        /*
+         * Perform acumulated servo output scaling to match servo min and max values
+         * Important: is servo rate is > 100%, total servo output might be bigger than
+         * min/max
+         */
+        if (servo[i] > 0) {
+            servo[i] = (int16_t) (servo[i] * servoMetadata[i].scaleMax);
+        } else {
+            servo[i] = (int16_t) (servo[i] * servoMetadata[i].scaleMin);
+        }
+
+        /*
+         * Add a servo midpoint to the calculation
+         */
+        servo[i] += servoParams(i)->middle;
+
+        /*
+         * Constrain servo position to min/max to prevent servo damage
+         * If servo was saturated above min/max, that means that user most probably
+         * allowed the situation when smix weight sum for an output was above 100
+         */
+        servo[i] = constrain(servo[i], servoParams(i)->min, servoParams(i)->max);
+    }
+
+    // If triflight is active, overwrite the stabilized yaw servo command with 
+    // the triflight servo command
     if (feature(FEATURE_TRIFLIGHT) && (mixerConfig()->platformType == PLATFORM_TRICOPTER))
     {
         triServoMixer((float)axisPID[YAW]);
     }
-    else
-    {
-        if (FLIGHT_MODE(MANUAL_MODE)) {
-            input[INPUT_STABILIZED_ROLL] = rcCommand[ROLL];
-            input[INPUT_STABILIZED_PITCH] = rcCommand[PITCH];
-            input[INPUT_STABILIZED_YAW] = rcCommand[YAW];
-        } else {
-            // Assisted modes (gyro only or gyro+acc according to AUX configuration in Gui
-            input[INPUT_STABILIZED_ROLL] = axisPID[ROLL];
-            input[INPUT_STABILIZED_PITCH] = axisPID[PITCH];
-            input[INPUT_STABILIZED_YAW] = axisPID[YAW];
-
-            // Reverse yaw servo when inverted in 3D mode only for multirotor and tricopter
-            if (feature(FEATURE_REVERSIBLE_MOTORS) && (rxGetChannelValue(THROTTLE) < PWM_RANGE_MIDDLE) &&
-            (mixerConfig()->platformType == PLATFORM_MULTIROTOR || mixerConfig()->platformType == PLATFORM_TRICOPTER)) {
-                input[INPUT_STABILIZED_YAW] *= -1;
-            }
-        }
-
-        input[INPUT_STABILIZED_ROLL_PLUS] = constrain(input[INPUT_STABILIZED_ROLL], 0, 1000);
-        input[INPUT_STABILIZED_ROLL_MINUS] = constrain(input[INPUT_STABILIZED_ROLL], -1000, 0);
-        input[INPUT_STABILIZED_PITCH_PLUS] = constrain(input[INPUT_STABILIZED_PITCH], 0, 1000);
-        input[INPUT_STABILIZED_PITCH_MINUS] = constrain(input[INPUT_STABILIZED_PITCH], -1000, 0);
-        input[INPUT_STABILIZED_YAW_PLUS] = constrain(input[INPUT_STABILIZED_YAW], 0, 1000);
-        input[INPUT_STABILIZED_YAW_MINUS] = constrain(input[INPUT_STABILIZED_YAW], -1000, 0);
-
-        input[INPUT_FEATURE_FLAPS] = FLIGHT_MODE(FLAPERON) ? servoConfig()->flaperon_throw_offset : 0;
-
-        input[INPUT_MAX] = 500;
-#ifdef USE_PROGRAMMING_FRAMEWORK
-        input[INPUT_GVAR_0] = constrain(gvGet(0), -1000, 1000);
-        input[INPUT_GVAR_1] = constrain(gvGet(1), -1000, 1000);
-        input[INPUT_GVAR_2] = constrain(gvGet(2), -1000, 1000);
-        input[INPUT_GVAR_3] = constrain(gvGet(3), -1000, 1000);
-        input[INPUT_GVAR_4] = constrain(gvGet(4), -1000, 1000);
-        input[INPUT_GVAR_5] = constrain(gvGet(5), -1000, 1000);
-        input[INPUT_GVAR_6] = constrain(gvGet(6), -1000, 1000);
-        input[INPUT_GVAR_7] = constrain(gvGet(7), -1000, 1000);
-#endif
-
-        if (IS_RC_MODE_ACTIVE(BOXCAMSTAB)) {
-            input[INPUT_GIMBAL_PITCH] = scaleRange(attitude.values.pitch, -900, 900, -500, +500);
-            input[INPUT_GIMBAL_ROLL] = scaleRange(attitude.values.roll, -1800, 1800, -500, +500);
-        } else {
-            input[INPUT_GIMBAL_PITCH] = 0;
-            input[INPUT_GIMBAL_ROLL] = 0;
-        }
-
-        input[INPUT_STABILIZED_THROTTLE] = mixerThrottleCommand - 1000 - 500;  // Since it derives from rcCommand or mincommand and must be [-500:+500]
-
-        // center the RC input value around the RC middle value
-        // by subtracting the RC middle value from the RC input value, we get:
-        // data - middle = input
-        // 2000 - 1500 = +500
-        // 1500 - 1500 = 0
-        // 1000 - 1500 = -500
-#define GET_RX_CHANNEL_INPUT(x) (rxGetChannelValue(x) - PWM_RANGE_MIDDLE)
-        input[INPUT_RC_ROLL]     = GET_RX_CHANNEL_INPUT(ROLL);
-        input[INPUT_RC_PITCH]    = GET_RX_CHANNEL_INPUT(PITCH);
-        input[INPUT_RC_YAW]      = GET_RX_CHANNEL_INPUT(YAW);
-        input[INPUT_RC_THROTTLE] = GET_RX_CHANNEL_INPUT(THROTTLE);
-        input[INPUT_RC_CH5]      = GET_RX_CHANNEL_INPUT(AUX1);
-        input[INPUT_RC_CH6]      = GET_RX_CHANNEL_INPUT(AUX2);
-        input[INPUT_RC_CH7]      = GET_RX_CHANNEL_INPUT(AUX3);
-        input[INPUT_RC_CH8]      = GET_RX_CHANNEL_INPUT(AUX4);
-        input[INPUT_RC_CH9]      = GET_RX_CHANNEL_INPUT(AUX5);
-        input[INPUT_RC_CH10]     = GET_RX_CHANNEL_INPUT(AUX6);
-        input[INPUT_RC_CH11]     = GET_RX_CHANNEL_INPUT(AUX7);
-        input[INPUT_RC_CH12]     = GET_RX_CHANNEL_INPUT(AUX8);
-        input[INPUT_RC_CH13]     = GET_RX_CHANNEL_INPUT(AUX9);
-        input[INPUT_RC_CH14]     = GET_RX_CHANNEL_INPUT(AUX10);
-        input[INPUT_RC_CH15]     = GET_RX_CHANNEL_INPUT(AUX11);
-        input[INPUT_RC_CH16]     = GET_RX_CHANNEL_INPUT(AUX12);
-#undef GET_RX_CHANNEL_INPUT
-
-        for (int i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
-            servo[i] = 0;
-        }
-
-        // mix servos according to rules
-        for (int i = 0; i < servoRuleCount; i++) {
-
-            /*
-             * Check if conditions for a rule are met, not all conditions apply all the time
-             */
-#ifdef USE_PROGRAMMING_FRAMEWORK
-            if (!logicConditionGetValue(currentServoMixer[i].conditionId)) {
-                continue; 
-            }
-#endif
-
-            const uint8_t target = currentServoMixer[i].targetChannel;
-            const uint8_t from = currentServoMixer[i].inputSource;
-
-            /*
-             * Apply mixer speed limit. 1 [one] speed unit is defined as 10us/s:
-             * 0 = no limiting
-             * 1 = 10us/s -> full servo sweep (from 1000 to 2000) is performed in 100s
-             * 10 = 100us/s -> full sweep (from 1000 to 2000)  is performed in 10s
-             * 100 = 1000us/s -> full sweep in 1s
-             */
-            int16_t inputLimited = (int16_t) rateLimitFilterApply4(&servoSpeedLimitFilter[i], input[from], currentServoMixer[i].speed * 10, dT);
-
-            servo[target] += ((int32_t)inputLimited * currentServoMixer[i].rate) / 100;
-        }
-
-        for (int i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
-
-            /*
-             * Apply servo rate
-             */
-            servo[i] = ((int32_t)servoParams(i)->rate * servo[i]) / 100L;
-
-            /*
-             * Perform acumulated servo output scaling to match servo min and max values
-             * Important: is servo rate is > 100%, total servo output might be bigger than
-             * min/max
-             */
-            if (servo[i] > 0) {
-                servo[i] = (int16_t) (servo[i] * servoMetadata[i].scaleMax);
-            } else {
-                servo[i] = (int16_t) (servo[i] * servoMetadata[i].scaleMin);
-            }
-
-            /*
-             * Add a servo midpoint to the calculation
-             */
-            servo[i] += servoParams(i)->middle;
-
-            /*
-             * Constrain servo position to min/max to prevent servo damage
-             * If servo was saturated above min/max, that means that user most probably
-             * allowed the situation when smix weight sum for an output was above 100
-             */
-            servo[i] = constrain(servo[i], servoParams(i)->min, servoParams(i)->max);
-        }
-	}
 }
 
 #define SERVO_AUTOTRIM_TIMER_MS     2000
