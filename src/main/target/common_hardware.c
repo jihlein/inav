@@ -152,7 +152,7 @@
     #if !defined(MS5607_I2C_BUS)
         #define MS5607_I2C_BUS BARO_I2C_BUS
     #endif
-    BUSDEV_REGISTER_I2C(busdev_ms5607,      DEVHW_MS5607,       MS5607_I2C_BUS,     0x77,               NONE,           DEVFLAGS_USE_RAW_REGISTERS, 0);
+    BUSDEV_REGISTER_I2C(busdev_ms5607,      DEVHW_MS5607,       MS5607_I2C_BUS,     MS56XX_ADDR,               NONE,           DEVFLAGS_USE_RAW_REGISTERS, 0);
 #endif
 
 #if defined(USE_BARO_MS5611)
@@ -162,7 +162,7 @@
     #if !defined(MS5611_I2C_BUS)
         #define MS5611_I2C_BUS BARO_I2C_BUS
     #endif
-    BUSDEV_REGISTER_I2C(busdev_ms5611,      DEVHW_MS5611,       MS5611_I2C_BUS,     0x77,               NONE,           DEVFLAGS_USE_RAW_REGISTERS, 0);
+    BUSDEV_REGISTER_I2C(busdev_ms5611,      DEVHW_MS5611,       MS5611_I2C_BUS,     MS56XX_ADDR,               NONE,           DEVFLAGS_USE_RAW_REGISTERS, 0);
     #endif
 #endif
 

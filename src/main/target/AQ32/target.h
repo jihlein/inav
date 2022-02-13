@@ -140,7 +140,9 @@
 #define TARGET_IO_PORTD         0xffff
 #define TARGET_IO_PORTE         0xffff
 
-//#define USE_DSHOT
+#define USE_DSHOT
 //#define USE_ESC_SENSOR
 
 #define MAX_PWM_OUTPUT_PORTS    11
+
+#define PCA9685_I2C_BUS         BUS_I2C2
