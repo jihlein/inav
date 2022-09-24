@@ -529,6 +529,8 @@ static char * osdArmingDisabledReasonMessage(void)
         case ARMING_DISABLED_TAILTUNE:
             return OSD_MESSAGE_STR("TAILTUNE");
         // Cases without message
+        case ARMING_DISABLED_LANDING_DETECTED:
+            FALLTHROUGH;
         case ARMING_DISABLED_CMS_MENU:
             FALLTHROUGH;
         case ARMING_DISABLED_OSD_MENU:
@@ -1054,7 +1056,7 @@ static bool djiFormatMessages(char *buff)
         // Pick one of the available messages. Each message lasts
         // a second.
         if (messageCount > 0) {
-           strcpy(buff, messages[OSD_ALTERNATING_CHOICES(DJI_ALTERNATING_DURATION_SHORT, messageCount)]);;
+           strcpy(buff, messages[OSD_ALTERNATING_CHOICES(DJI_ALTERNATING_DURATION_SHORT, messageCount)]);
            haveMessage = true;
         }
     } else if (ARMING_FLAG(ARMING_DISABLED_ALL_FLAGS)) {

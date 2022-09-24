@@ -167,6 +167,16 @@
     #endif
 #endif
 
+#if defined(USE_BARO_B2SMPB)
+    #if defined(B2SMPB_SPI_BUS)
+    BUSDEV_REGISTER_SPI(busdev_b2smpb,     DEVHW_B2SMPB,        B2SMPB_SPI_BUS,     B2SMPB_CS_PIN,       NONE,           DEVFLAGS_NONE, 0);
+    #elif defined(B2SMPB_I2C_BUS) || defined(BARO_I2C_BUS)
+    #if !defined(B2SMPB_I2C_BUS)
+        #define B2SMPB_I2C_BUS BARO_I2C_BUS
+    #endif
+    BUSDEV_REGISTER_I2C(busdev_b2smpb,     DEVHW_B2SMPB,        B2SMPB_I2C_BUS,      0x70,                NONE,           DEVFLAGS_NONE, 0);
+    #endif
+#endif
 
 /** COMPASS SENSORS **/
 #if !defined(USE_TARGET_MAG_HARDWARE_DESCRIPTORS)
@@ -363,6 +373,10 @@
     BUSDEV_REGISTER_SPI(busdev_m25p16,      DEVHW_M25P16,       M25P16_SPI_BUS,     M25P16_CS_PIN,      NONE,           DEVFLAGS_NONE,  0);
 #endif
 
+#if defined(USE_FLASH_W25N01G)
+    BUSDEV_REGISTER_SPI(busdev_w25n01g,     DEVHW_W25N01G,      W25N01G_SPI_BUS,    W25N01G_CS_PIN,     NONE,           DEVFLAGS_NONE,  0);
+#endif
+
 #if defined(USE_SDCARD) && defined(USE_SDCARD_SPI)
     BUSDEV_REGISTER_SPI(busdev_sdcard_spi,  DEVHW_SDCARD,       SDCARD_SPI_BUS,     SDCARD_CS_PIN,      NONE,           DEVFLAGS_USE_MANUAL_DEVICE_SELECT | DEVFLAGS_SPI_MODE_0,  0);
 #endif
@@ -379,15 +393,6 @@
         #define UG2864_I2C_BUS BUS_I2C1
     #endif
     BUSDEV_REGISTER_I2C(busdev_ug2864,      DEVHW_UG2864,       UG2864_I2C_BUS,     0x3C,               NONE,           DEVFLAGS_NONE,  0);
-#endif
-
-#if defined(USE_PWM_SERVO_DRIVER)
-    #if defined(USE_PWM_DRIVER_PCA9685) && defined(USE_I2C)
-        #if !defined(PCA9685_I2C_BUS)
-            #define PCA9685_I2C_BUS BUS_I2C1
-        #endif
-        BUSDEV_REGISTER_I2C(busdev_pca9685,      DEVHW_PCA9685,       PCA9685_I2C_BUS,     0x40,               NONE,           DEVFLAGS_NONE,  0);
-    #endif
 #endif
 
 #if defined(USE_IRLOCK) && defined(USE_I2C)

@@ -121,6 +121,8 @@ main_sources(COMMON_SRC
     drivers/barometer/barometer_spl06.h
     drivers/barometer/barometer_msp.c
     drivers/barometer/barometer_msp.h
+    drivers/barometer/barometer_2smpb_02b.c
+    drivers/barometer/barometer_2smpb_02b.h
 
     drivers/buf_writer.c
     drivers/buf_writer.h
@@ -176,10 +178,10 @@ main_sources(COMMON_SRC
     drivers/flash.h
     drivers/flash_m25p16.c
     drivers/flash_m25p16.h
+    drivers/flash_w25n01g.c
+    drivers/flash_w25n01g.h
     drivers/io.c
     drivers/io.h
-    drivers/io_pca9685.c
-    drivers/io_pca9685.h
     drivers/io_pcf8574.c
     drivers/io_pcf8574.h
     drivers/io_port_expander.c
@@ -354,8 +356,6 @@ main_sources(COMMON_SRC
     io/lights.h
     io/piniobox.c
     io/piniobox.h
-    io/pwmdriver_i2c.c
-    io/pwmdriver_i2c.h
     io/serial.c
     io/serial.h
     io/serial_4way.c
@@ -552,6 +552,8 @@ main_sources(COMMON_SRC
     navigation/navigation_pos_estimator_flow.c
     navigation/navigation_private.h
     navigation/navigation_rover_boat.c
+    navigation/sqrt_controller.c
+    navigation/sqrt_controller.h
 
     sensors/barometer.c
     sensors/barometer.h

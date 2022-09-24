@@ -140,6 +140,7 @@ static uint8_t cliWriteBuffer[sizeof(*cliWriter) + 128];
 
 static char cliBuffer[64];
 static uint32_t bufferIndex = 0;
+static uint16_t cliDelayMs = 0;
 
 #if defined(USE_ASSERT)
 static void cliAssert(char *cmdline);
@@ -222,6 +223,9 @@ static void cliPrint(const char *str)
 static void cliPrintLinefeed(void)
 {
     cliPrint("\r\n");
+    if (cliDelayMs) {
+        delay(cliDelayMs);
+    }
 }
 
 static void cliPrintLine(const char *str)
@@ -1672,6 +1676,25 @@ static void cliModeColor(char *cmdline)
 }
 #endif
 
+static void cliDelay(char* cmdLine) {
+    int ms = 0;
+    if (isEmpty(cmdLine)) {
+        cliDelayMs = 0;
+        cliPrintLine("CLI delay deactivated");
+        return;
+    }
+    
+    ms = fastA2I(cmdLine);
+    if (ms) {
+        cliDelayMs = ms;
+        cliPrintLinef("CLI delay set to %d ms", ms);
+
+    } else {
+        cliShowParseError();
+    }
+    
+}
+
 static void printServo(uint8_t dumpMask, const servoParam_t *servoParam, const servoParam_t *defaultServoParam)
 {
     // print out servo settings
@@ -2248,6 +2271,11 @@ static void cliFlashInfo(char *cmdline)
     UNUSED(cmdline);
 
     const flashGeometry_t *layout = flashGetGeometry();
+    
+    if (layout->totalSize == 0) {
+        cliPrintLine("Flash not available");
+        return;
+    }
 
     cliPrintLinef("Flash sectors=%u, sectorSize=%u, pagesPerSector=%u, pageSize=%u, totalSize=%u",
             layout->sectors, layout->sectorSize, layout->pagesPerSector, layout->pageSize, layout->totalSize);
@@ -2277,6 +2305,13 @@ static void cliFlashErase(char *cmdline)
 {
     UNUSED(cmdline);
 
+    const flashGeometry_t *layout = flashGetGeometry();
+    
+    if (layout->totalSize == 0) {
+        cliPrintLine("Flash not available");
+        return;
+    }
+    
     cliPrintLine("Erasing...");
     flashfsEraseCompletely();
 
@@ -3344,7 +3379,11 @@ static void cliStatus(char *cmdline)
         hardwareSensorStatusNames[getHwRangefinderStatus()],
         hardwareSensorStatusNames[getHwOpticalFlowStatus()],
         hardwareSensorStatusNames[getHwGPSStatus()],
+#ifdef USE_SECONDARY_IMU
         hardwareSensorStatusNames[getHwSecondaryImuStatus()]
+#else
+        hardwareSensorStatusNames[0]
+#endif
     );
 
 #ifdef USE_ESC_SENSOR
@@ -3624,7 +3663,7 @@ static void printConfig(const char *cmdline, bool doDiff)
         printMotorMix(dumpMask, primaryMotorMixer_CopyArray, primaryMotorMixer(0));
 
         // print custom servo mixer if exists
-        cliPrintHashLine("servo mix");
+        cliPrintHashLine("servo mixer");
         cliDumpPrintLinef(dumpMask, customServoMixers_CopyArray[0].rate == 0, "smix reset\r\n");
         printServoMix(dumpMask, customServoMixers_CopyArray, customServoMixers(0));
 
@@ -3635,16 +3674,6 @@ static void printConfig(const char *cmdline, bool doDiff)
 #if defined(USE_SAFE_HOME)
         cliPrintHashLine("safehome");
         printSafeHomes(dumpMask, safeHomeConfig_CopyArray, safeHomeConfig(0));
-#endif
-#ifdef USE_PROGRAMMING_FRAMEWORK
-        cliPrintHashLine("logic");
-        printLogic(dumpMask, logicConditions_CopyArray, logicConditions(0));
-
-        cliPrintHashLine("gvar");
-        printGvar(dumpMask, globalVariableConfigs_CopyArray, globalVariableConfigs(0));
-
-        cliPrintHashLine("pid");
-        printPid(dumpMask, programmingPids_CopyArray, programmingPids(0));
 #endif
 
         cliPrintHashLine("feature");
@@ -3701,6 +3730,17 @@ static void printConfig(const char *cmdline, bool doDiff)
         printOsdLayout(dumpMask, &osdLayoutsConfig_Copy, osdLayoutsConfig(), -1, -1);
 #endif
 
+#ifdef USE_PROGRAMMING_FRAMEWORK
+        cliPrintHashLine("logic");
+        printLogic(dumpMask, logicConditions_CopyArray, logicConditions(0));
+
+        cliPrintHashLine("global vars");
+        printGvar(dumpMask, globalVariableConfigs_CopyArray, globalVariableConfigs(0));
+
+        cliPrintHashLine("programmable pid controllers");
+        printPid(dumpMask, programmingPids_CopyArray, programmingPids(0));
+#endif
+
         cliPrintHashLine("master");
         dumpAllValues(MASTER_VALUE, dumpMask);
 
@@ -3721,7 +3761,6 @@ static void printConfig(const char *cmdline, bool doDiff)
             cliPrintLinef("profile %d", currentProfileIndexSave + 1);
             cliPrintLinef("battery_profile %d", currentBatteryProfileIndexSave + 1);
 
-            cliPrintHashLine("save configuration\r\nsave");
 #ifdef USE_CLI_BATCH
             batchModeEnabled = false;
 #endif
@@ -3738,6 +3777,10 @@ static void printConfig(const char *cmdline, bool doDiff)
 
     if (dumpMask & DUMP_BATTERY_PROFILE) {
         cliDumpBatteryProfile(getConfigBatteryProfile(), dumpMask);
+    }
+
+    if ((dumpMask & DUMP_MASTER) || (dumpMask & DUMP_ALL)) {
+        cliPrintHashLine("save configuration\r\nsave");
     }
 
 #ifdef USE_CLI_BATCH
@@ -3840,6 +3883,7 @@ const clicmd_t cmdTable[] = {
     CLI_COMMAND_DEF("color", "configure colors", NULL, cliColor),
     CLI_COMMAND_DEF("mode_color", "configure mode and special colors", NULL, cliModeColor),
 #endif
+    CLI_COMMAND_DEF("cli_delay", "CLI Delay", "Delay in ms", cliDelay),
     CLI_COMMAND_DEF("defaults", "reset to defaults and reboot", NULL, cliDefaults),
     CLI_COMMAND_DEF("dfu", "DFU mode on reboot", NULL, cliDfu),
     CLI_COMMAND_DEF("diff", "list configuration changes from default",
