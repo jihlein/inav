@@ -46,7 +46,7 @@ typedef enum {
     ARMING_DISABLED_NO_PREARM                       = (1 << 28),
     ARMING_DISABLED_DSHOT_BEEPER                    = (1 << 29),
     ARMING_DISABLED_LANDING_DETECTED                = (1 << 30),
-    ARMING_DISABLED_TAILTUBE                        = ( << 31),
+    ARMING_DISABLED_TAILTUNE                        = (1 << 31),
 
     ARMING_DISABLED_ALL_FLAGS                       = (ARMING_DISABLED_FAILSAFE_SYSTEM | ARMING_DISABLED_NOT_LEVEL | ARMING_DISABLED_SENSORS_CALIBRATING |
                                                        ARMING_DISABLED_SYSTEM_OVERLOADED | ARMING_DISABLED_NAVIGATION_UNSAFE |
