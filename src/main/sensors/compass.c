@@ -64,7 +64,7 @@ mag_t mag;                   // mag access functions
 
 #ifdef USE_MAG
 
-PG_REGISTER_WITH_RESET_TEMPLATE(compassConfig_t, compassConfig, PG_COMPASS_CONFIG, 5);
+PG_REGISTER_WITH_RESET_TEMPLATE(compassConfig_t, compassConfig, PG_COMPASS_CONFIG, 6);
 
 PG_RESET_TEMPLATE(compassConfig_t, compassConfig,
     .mag_align = SETTING_ALIGN_MAG_DEFAULT,
@@ -80,7 +80,7 @@ PG_RESET_TEMPLATE(compassConfig_t, compassConfig,
     .magGain = {SETTING_MAGGAIN_X_DEFAULT, SETTING_MAGGAIN_Y_DEFAULT, SETTING_MAGGAIN_Z_DEFAULT},
 );
 
-static uint8_t magUpdatedAtLeastOnce = 0;
+static bool magUpdatedAtLeastOnce = false;
 
 bool compassDetect(magDev_t *dev, magSensor_e magHardwareToUse)
 {
@@ -137,19 +137,6 @@ bool compassDetect(magDev_t *dev, magSensor_e magHardwareToUse)
 #ifdef USE_MAG_AK8963
         if (ak8963Detect(dev)) {
             magHardware = MAG_AK8963;
-            break;
-        }
-#endif
-        /* If we are asked for a specific sensor - break out, otherwise - fall through and continue */
-        if (magHardwareToUse != MAG_AUTODETECT) {
-            break;
-        }
-        FALLTHROUGH;
-
-    case MAG_GPS:
-#ifdef USE_GPS
-        if (gpsMagDetect(dev)) {
-            magHardware = MAG_GPS;
             break;
         }
 #endif
@@ -369,11 +356,20 @@ bool compassIsCalibrationComplete(void)
 
 void compassUpdate(timeUs_t currentTimeUs)
 {
+#ifdef USE_SIMULATOR
+	if (ARMING_FLAG(SIMULATOR_MODE_HITL)) {
+		magUpdatedAtLeastOnce = true;
+		return;
+	}
+#endif
     static sensorCalibrationState_t calState;
     static timeUs_t calStartedAt = 0;
     static int16_t magPrev[XYZ_AXIS_COUNT];
     static int magAxisDeviation[XYZ_AXIS_COUNT];
 
+#if defined(SITL_BUILD)
+    ENABLE_STATE(COMPASS_CALIBRATED);
+#else
     // Check magZero
     if (
         compassConfig()->magZero.raw[X] == 0 && compassConfig()->magZero.raw[Y] == 0 && compassConfig()->magZero.raw[Z] == 0 &&
@@ -384,6 +380,7 @@ void compassUpdate(timeUs_t currentTimeUs)
     else {
         ENABLE_STATE(COMPASS_CALIBRATED);
     }
+#endif
 
     if (!mag.dev.read(&mag.dev)) {
         mag.magADC[X] = 0;
@@ -486,6 +483,6 @@ void compassUpdate(timeUs_t currentTimeUs)
         applyBoardAlignment(mag.magADC);
     }
 
-    magUpdatedAtLeastOnce = 1;
+    magUpdatedAtLeastOnce = true;
 }
 #endif

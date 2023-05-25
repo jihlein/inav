@@ -18,6 +18,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <time.h>
 
 #include "config/parameter_group.h"
 
@@ -34,11 +35,9 @@
 typedef enum {
     GPS_NMEA = 0,
     GPS_UBLOX,
-    GPS_I2CNAV,
-    GPS_NAZA,
     GPS_UBLOX7PLUS,
-    GPS_MTK,
     GPS_MSP,
+    GPS_FAKE,
     GPS_PROVIDER_COUNT
 } gpsProvider_e;
 
@@ -154,7 +153,6 @@ extern gpsSolutionData_t gpsSol;
 extern gpsStatistics_t   gpsStats;
 
 struct magDev_s;
-bool gpsMagDetect(struct magDev_s *mag);
 void gpsPreInit(void);
 void gpsInit(void);
 // Called periodically from GPS task. Returns true iff the GPS
@@ -166,3 +164,18 @@ bool isGPSHeadingValid(void);
 struct serialPort_s;
 void gpsEnablePassthrough(struct serialPort_s *gpsPassthroughPort);
 void mspGPSReceiveNewData(const uint8_t * bufferPtr);
+
+#if defined(USE_GPS_FAKE)
+void gpsFakeSet(
+    gpsFixType_e fixType,
+    uint8_t numSat,
+    int32_t lat, 
+    int32_t lon, 
+    int32_t alt, 
+    int16_t groundSpeed, 
+    int16_t groundCourse, 
+    int16_t velNED_X,  
+    int16_t velNED_Y,  
+    int16_t velNED_Z,
+    time_t time);
+#endif

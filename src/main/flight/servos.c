@@ -229,7 +229,8 @@ static void filterServos(void)
 void writeServos(void)
 {
     filterServos();
-
+    
+#if !defined(SITL_BUILD)
     int servoIndex = 0;
     bool zeroServoValue = false;
 
@@ -247,6 +248,7 @@ void writeServos(void)
             pwmWriteServo(servoIndex++, servo[i]);
         }
     }
+#endif
 }
 
 void servoMixer(float dT)
@@ -326,6 +328,13 @@ void servoMixer(float dT)
     input[INPUT_RC_CH16]     = GET_RX_CHANNEL_INPUT(AUX12);
 #undef GET_RX_CHANNEL_INPUT
 
+#ifdef USE_SIMULATOR
+	simulatorData.input[INPUT_STABILIZED_ROLL] = input[INPUT_STABILIZED_ROLL];
+	simulatorData.input[INPUT_STABILIZED_PITCH] = input[INPUT_STABILIZED_PITCH];
+	simulatorData.input[INPUT_STABILIZED_YAW] = input[INPUT_STABILIZED_YAW];
+	simulatorData.input[INPUT_STABILIZED_THROTTLE] = input[INPUT_STABILIZED_THROTTLE];
+#endif
+
     for (int i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
         servo[i] = 0;
     }
@@ -355,6 +364,20 @@ void servoMixer(float dT)
         int16_t inputLimited = (int16_t) rateLimitFilterApply4(&servoSpeedLimitFilter[i], input[from], currentServoMixer[i].speed * 10, dT);
 
         servo[target] += ((int32_t)inputLimited * currentServoMixer[i].rate) / 100;
+    }
+
+    /*
+     * When not armed, apply servo low position to all outputs that include a throttle or stabilizet throttle in the mix
+     */
+    if (!ARMING_FLAG(ARMED)) {
+        for (int i = 0; i < servoRuleCount; i++) {
+            const uint8_t target = currentServoMixer[i].targetChannel;
+            const uint8_t from = currentServoMixer[i].inputSource;
+
+            if (from == INPUT_STABILIZED_THROTTLE || from == INPUT_RC_THROTTLE) {
+                servo[target] = motorConfig()->mincommand;
+            }
+        }
     }
 
     for (int i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
@@ -531,7 +554,7 @@ void processContinuousServoAutotrim(const float dT)
                 isGPSHeadingValid() // TODO: proper flying detection
             ) { 
                 // Plane is flying straight and level: trim servos
-                for (int axis = FD_ROLL; axis <= FD_YAW; axis++) {
+                for (int axis = FD_ROLL; axis <= FD_PITCH; axis++) {
                     // For each stabilized axis, add 5 units of I-term to all associated servo midpoints
                     const float axisIterm = getAxisIterm(axis);
                     if (fabsf(axisIterm) > SERVO_AUTOTRIM_UPDATE_SIZE) {
@@ -548,7 +571,7 @@ void processContinuousServoAutotrim(const float dT)
                                 // Convert axis I-term to servo PWM and add to midpoint
                                 const float mixerRate = currentServoMixer[i].rate / 100.0f;
                                 const float servoRate = servoParams(target)->rate / 100.0f;
-                                servoParamsMutable(target)->middle += ItermUpdate * mixerRate * servoRate;
+                                servoParamsMutable(target)->middle += (int16_t)(ItermUpdate * mixerRate * servoRate);
                                 servoParamsMutable(target)->middle = constrain(servoParamsMutable(target)->middle, SERVO_AUTOTRIM_CENTER_MIN, SERVO_AUTOTRIM_CENTER_MAX);
                                 }
                         }
@@ -562,7 +585,7 @@ void processContinuousServoAutotrim(const float dT)
         }
     } else if (trimState == AUTOTRIM_COLLECTING) {
         // We have disarmed, save midpoints to EEPROM
-        writeEEPROM();
+        saveConfigAndNotify();
         trimState = AUTOTRIM_IDLE;
     }
 
@@ -578,6 +601,11 @@ void processContinuousServoAutotrim(const float dT)
 }
 
 void processServoAutotrim(const float dT) {
+#ifdef USE_SIMULATOR
+    if (ARMING_FLAG(SIMULATOR_MODE_HITL)) {
+        return;
+    }
+#endif
     if (feature(FEATURE_FW_AUTOTRIM)) {
         processContinuousServoAutotrim(dT);
     } else {

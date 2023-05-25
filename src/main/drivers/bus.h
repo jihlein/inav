@@ -77,7 +77,6 @@ typedef enum {
 
     /* Combined ACC/GYRO chips */
     DEVHW_MPU6000,
-    DEVHW_MPU6050,
     DEVHW_MPU6500,
     DEVHW_BMI160,
     DEVHW_BMI088_GYRO,
@@ -85,7 +84,7 @@ typedef enum {
     DEVHW_ICM20689,
     DEVHW_ICM42605,
     DEVHW_BMI270,
-
+    DEVHW_LSM6D,
     /* Combined ACC/GYRO/MAG chips */
     DEVHW_MPU9250,
 
@@ -145,7 +144,6 @@ typedef enum {
     DEVHW_SDCARD,       // Generic SD-Card
     DEVHW_IRLOCK,       // IR-Lock visual positioning hardware
     DEVHW_PCF8574,      // 8-bit I/O expander
-    DEVHW_BNO055,       // BNO055 IMU
 } devHardwareType_e;
 
 typedef enum {
@@ -288,6 +286,7 @@ bool i2cBusWriteBuffer(const busDevice_t * dev, uint8_t reg, const uint8_t * dat
 bool i2cBusWriteRegister(const busDevice_t * dev, uint8_t reg, uint8_t data);
 bool i2cBusReadBuffer(const busDevice_t * dev, uint8_t reg, uint8_t * data, uint8_t length);
 bool i2cBusReadRegister(const busDevice_t * dev, uint8_t reg, uint8_t * data);
+bool i2cBusBusy(const busDevice_t *dev, bool *error);
 
 bool spiBusInitHost(const busDevice_t * dev);
 bool spiBusIsBusy(const busDevice_t * dev);

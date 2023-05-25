@@ -47,6 +47,7 @@
 #include "flight/imu.h"
 
 #include "io/gps.h"
+#include "io/osd.h"
 #include "io/serial.h"
 
 #include "navigation/navigation.h"
@@ -195,10 +196,7 @@ static void sendThrottleOrBatterySizeAsRpm(void)
 {
     sendDataHead(ID_RPM);
     if (ARMING_FLAG(ARMED)) {
-        const throttleStatus_e throttleStatus = calculateThrottleStatus(THROTTLE_STATUS_TYPE_RC);
-        uint16_t throttleForRPM = rcCommand[THROTTLE] / BLADE_NUMBER_DIVIDER;
-        if (throttleStatus == THROTTLE_LOW && feature(FEATURE_MOTOR_STOP))
-                    throttleForRPM = 0;
+        uint16_t throttleForRPM = getThrottlePercent(osdUsingScaledThrottle()) / BLADE_NUMBER_DIVIDER;
         serialize16(throttleForRPM);
     } else {
         serialize16((currentBatteryProfile->capacity.value / BLADE_NUMBER_DIVIDER));
