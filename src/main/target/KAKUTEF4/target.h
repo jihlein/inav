@@ -23,7 +23,7 @@
  */
 
 #pragma once
-#if defined(KAKUTEF4V2)
+#if defined(KAKUTEF4V2) || defined(KAKUTEF4V2_HJI)
 #   define TARGET_BOARD_IDENTIFIER "KTV2"
 #   define USBD_PRODUCT_STRING "KakuteF4-V2"
 #elif defined(KAKUTEF4V23)
@@ -54,7 +54,7 @@
 #define MPU6000_CS_PIN          PC4
 #define MPU6000_SPI_BUS         BUS_SPI1
 
-#if defined(KAKUTEF4V2) || defined(KAKUTEF4V23)
+#if defined(KAKUTEF4V2) || defined(KAKUTEF4V23) || (KAKUTEF4V2_HJI)
 #   define USE_I2C
 #   define USE_I2C_DEVICE_1
 #   define I2C1_SCL                PB8        // SCL pad
@@ -105,7 +105,7 @@
 #define UART6_RX_PIN            PC7
 #define UART6_TX_PIN            PC6
 
-#if defined(KAKUTEF4V2) || defined(KAKUTEF4V23)
+#if defined(KAKUTEF4V2) || defined(KAKUTEF4V23) || defined(KAKUTEF4V2_HJI)
 #   define USE_UART4
 #   define UART4_RX_PIN            PA1
 #   define UART4_TX_PIN            PA0
@@ -169,7 +169,7 @@
 #define USE_DSHOT
 #define USE_ESC_SENSOR
 
-#ifdef KAKUTEF4V2
+#if defined(KAKUTEF4V2) || defined(KAKUTEF4V2_HJI)
 #   define MAX_PWM_OUTPUT_PORTS       4
 #else
 #   define MAX_PWM_OUTPUT_PORTS       6

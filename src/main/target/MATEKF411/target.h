@@ -66,7 +66,11 @@
 
 #define USE_UART2
 #define UART2_TX_PIN            PA2
-#define UART2_RX_PIN            PA3
+#if defined(MATEKF411_HJI)
+    #define UART2_RX_PIN        NONE
+#else
+    #define UART2_RX_PIN        PA3
+#endif
 
 #if defined(MATEKF411_SFTSRL2)
 #define USE_SOFTSERIAL1
@@ -83,7 +87,7 @@
 #define SOFTSERIAL_1_RX_PIN     PA8 // LED pad
 #define SERIAL_PORT_COUNT       4
 
-#elif defined(MATEKF411_RSSI)
+#elif defined(MATEKF411_RSSI) || defined(MATEKF411_HJI)
 #define USE_SOFTSERIAL1
 #define SOFTSERIAL_1_TX_PIN     PA8 // LED pad
 #define SOFTSERIAL_1_RX_PIN     PA8
@@ -133,13 +137,17 @@
 #define VBAT_ADC_CHANNEL            ADC_CHN_1
 #define CURRENT_METER_ADC_CHANNEL   ADC_CHN_2
 
-#if defined(MATEKF411_RSSI)
-#define ADC_CHANNEL_3_PIN           PA0
+#if defined(MATEKF411_RSSI) || defined(MATEKF411_HJI)
+    #if defined(MATEKF411_HJI)
+        #define ADC_CHANNEL_3_PIN           PA3
+    #else
+        #define ADC_CHANNEL_3_PIN           PA0
+    #endif
 #define RSSI_ADC_CHANNEL            ADC_CHN_3
 #endif
 
 // *************** LED2812 ************************
-#if !defined(MATEKF411_SFTSRL2) && !defined(MATEKF411_RSSI) && !defined(MATEKF411_FD_SFTSRL)
+#if !defined(MATEKF411_SFTSRL2) && !defined(MATEKF411_RSSI) && !defined(MATEKF411_FD_SFTSRL) && !defined(MATEKF411_HJI)
 #define USE_LED_STRIP
 #define WS2811_PIN                      PA8
 #endif

@@ -49,6 +49,7 @@
 
 #include "flight/imu.h"
 #include "flight/mixer.h"
+#include "flight/mixer_tricopter.h"
 #include "flight/pid.h"
 #include "flight/servos.h"
 
@@ -190,6 +191,11 @@ void servosInit(void)
 
     for (uint8_t i = 0; i < MAX_SUPPORTED_SERVOS; i++) {
         servoComputeScalingFactors(i);
+    }
+
+    if (feature(FEATURE_TRIFLIGHT) && (mixerConfig()->platformType == PLATFORM_TRICOPTER))
+    {
+        triInitMixer(servoParamsMutable(SERVO_RUDDER), &servo[SERVO_RUDDER]);
     }
 }
 
@@ -414,6 +420,14 @@ void servoMixer(float dT)
          * allowed the situation when smix weight sum for an output was above 100
          */
         servo[i] = constrain(servo[i], servoParams(i)->min, servoParams(i)->max);
+    }
+
+
+    // If triflight is active, overwrite the stabilized yaw servo command with 
+    // the triflight servo command
+    if (feature(FEATURE_TRIFLIGHT) && (mixerConfig()->platformType == PLATFORM_TRICOPTER))
+    {
+        triServoMixer((float)axisPID[YAW]);
     }
 
     /*

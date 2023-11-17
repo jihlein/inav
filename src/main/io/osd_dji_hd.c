@@ -526,6 +526,8 @@ static char * osdArmingDisabledReasonMessage(void)
             return OSD_MESSAGE_STR("NO PREARM");
         case ARMING_DISABLED_DSHOT_BEEPER:
             return OSD_MESSAGE_STR("MOTOR BEEPER ACTIVE");
+        case ARMING_DISABLED_TAILTUNE:
+            return OSD_MESSAGE_STR("TAILTUNE");
             // Cases without message
         case ARMING_DISABLED_LANDING_DETECTED:
             FALLTHROUGH;

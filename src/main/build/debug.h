@@ -72,5 +72,6 @@ typedef enum {
     DEBUG_RATE_DYNAMICS,
     DEBUG_LANDING,
     DEBUG_POS_EST,
+    DEBUG_TRIFLIGHT,
     DEBUG_COUNT
 } debugType_e;

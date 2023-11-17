@@ -48,6 +48,7 @@
 #include "flight/failsafe.h"
 #include "flight/imu.h"
 #include "flight/mixer.h"
+#include "flight/mixer_tricopter.h"
 #include "flight/pid.h"
 #include "flight/servos.h"
 
@@ -61,6 +62,7 @@ FASTRAM int16_t motor[MAX_SUPPORTED_MOTORS];
 FASTRAM int16_t motor_disarmed[MAX_SUPPORTED_MOTORS];
 static float motorMixRange;
 static float mixerScale = 1.0f;
+int16_t throttleMin, throttleMax;
 static EXTENDED_FASTRAM motorMixer_t currentMixer[MAX_SUPPORTED_MOTORS];
 static EXTENDED_FASTRAM uint8_t motorCount = 0;
 EXTENDED_FASTRAM int mixerThrottleCommand;
@@ -538,8 +540,7 @@ void FAST_CODE mixTable(void)
 
     int16_t rpyMixRange = rpyMixMax - rpyMixMin;
     int16_t throttleRange;
-    int16_t throttleMin, throttleMax;
-
+    
     // Find min and max throttle based on condition.
 #ifdef USE_PROGRAMMING_FRAMEWORK
     if (LOGIC_CONDITION_GLOBAL_FLAG(LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_THROTTLE)) {
@@ -620,7 +621,13 @@ void FAST_CODE mixTable(void)
     // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
     // roll/pitch/yaw. This could move throttle down, but also up for those low throttle flips.
     for (int i = 0; i < motorCount; i++) {
-        motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * currentMixer[i].throttle, throttleMin, throttleMax);
+        int16_t correction = 0;
+
+
+            if ((feature(FEATURE_TRIFLIGHT)) && (mixerConfig()->platformType == PLATFORM_TRICOPTER))
+                correction = triGetMotorCorrection(i);
+
+        motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * currentMixer[i].throttle, throttleMin, throttleMax) + correction;
 
         if (failsafeIsActive()) {
             motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);
@@ -717,4 +724,14 @@ bool areMotorsRunning(void)
     }
 
     return false;
+}
+
+uint16_t mixGetMotorOutputLow(void)
+{
+    return throttleMin;
+}
+
+uint16_t mixGetMotorOutputHigh(void)
+{
+    return throttleMax;
 }

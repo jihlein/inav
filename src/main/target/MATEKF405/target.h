@@ -153,7 +153,7 @@
 
 #define USE_RANGEFINDER
 #define USE_RANGEFINDER_MSP
-#define RANGEFINDER_I2C_BUS     DEFAULT_I2C_BUS
+#define RANGEFINDER_I2C_BUS         DEFAULT_I2C_BUS
 
 #define PITOT_I2C_BUS               DEFAULT_I2C_BUS
 
@@ -172,7 +172,11 @@
 #define CURRENT_METER_SCALE   179
 
 #define USE_LED_STRIP
-#define WS2811_PIN                      PA15 // S5 pad for INAV
+#if defined(MATEKF405_HJI)
+    #define WS2811_PIN                      PA8  // S6 pad for INAV
+#else
+    #define WS2811_PIN                      PA15 // S5 pad for INAV
+#endif
 
 #define USE_SPEKTRUM_BIND
 #define BIND_PIN                PA3 //  RX2

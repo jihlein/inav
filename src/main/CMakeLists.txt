@@ -318,6 +318,8 @@ main_sources(COMMON_SRC
     flight/rate_dynamics.h
     flight/mixer.c
     flight/mixer.h
+    flight/mixer_tricopter.c
+    flight/mixer_tricopter.h
     flight/pid.c
     flight/pid.h
     flight/pid_autotune.c

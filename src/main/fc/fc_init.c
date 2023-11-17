@@ -92,6 +92,7 @@
 #include "flight/failsafe.h"
 #include "flight/imu.h"
 #include "flight/mixer.h"
+#include "flight/mixer_tricopter.h"
 #include "flight/pid.h"
 #include "flight/power_limits.h"
 #include "flight/rpm_filter.h"
@@ -449,11 +450,17 @@ void init(void)
         adc_params.adcFunctionChannel[ADC_BATTERY] = adcChannelConfig()->adcFunctionChannel[ADC_BATTERY];
     }
 
-    if (feature(FEATURE_RSSI_ADC)) {
+    if (feature(FEATURE_RSSI_ADC) ||
+       (!feature(FEATURE_RSSI_ADC) && feature(FEATURE_TRIFLIGHT) && (mixerConfig()->platformType == PLATFORM_TRICOPTER) &&
+       triflightConfig()->tri_servo_feedback == TRI_SERVO_FB_RSSI)) 
+    {
         adc_params.adcFunctionChannel[ADC_RSSI] = adcChannelConfig()->adcFunctionChannel[ADC_RSSI];
     }
 
-    if (feature(FEATURE_CURRENT_METER) && batteryMetersConfig()->current.type == CURRENT_SENSOR_ADC) {
+    if ((feature(FEATURE_CURRENT_METER) && batteryMetersConfig()->current.type == CURRENT_SENSOR_ADC) ||
+       (!feature(FEATURE_RSSI_ADC) && feature(FEATURE_TRIFLIGHT) && (mixerConfig()->platformType == PLATFORM_TRICOPTER) &&
+       triflightConfig()->tri_servo_feedback == TRI_SERVO_FB_CURRENT)) 
+    {
         adc_params.adcFunctionChannel[ADC_CURRENT] =  adcChannelConfig()->adcFunctionChannel[ADC_CURRENT];
     }
 

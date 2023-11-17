@@ -76,7 +76,7 @@
 #define UART6_RX_PIN            PC7
 
 #define USE_UART7
-#define UART7_TX_PIN            NONE
+#define UART7_TX_PIN            PE8
 #define UART7_RX_PIN            PE7
 
 #define SERIAL_PORT_COUNT 7 //VCP,UART1,UART2,UART3,UART4,UART6,UART7

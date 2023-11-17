@@ -25,10 +25,17 @@
 timerHardware_t timerHardware[] = {
     // DEF_TIM(TIM9, CH2, PA3,   TIM_USE_PPM,   0, 0), // PPM IN
 
+#if defined(MATEKF411_HJI)    
+    DEF_TIM(TIM4, CH1, PB6,  TIM_USE_OUTPUT_AUTO,  0, 0), // S3  D(1,0,2)
+    DEF_TIM(TIM3, CH2, PB5,  TIM_USE_OUTPUT_AUTO,  0, 0), // S2  D(1,5,5)
+    DEF_TIM(TIM4, CH2, PB7,  TIM_USE_OUTPUT_AUTO,  0, 0), // S4  D(1,3,2)
+    DEF_TIM(TIM3, CH1, PB4,  TIM_USE_OUTPUT_AUTO,  0, 0), // S1  D(1,4,5)
+#else
     DEF_TIM(TIM3, CH1, PB4,  TIM_USE_OUTPUT_AUTO,  0, 0), // S1  D(1,4,5)
     DEF_TIM(TIM3, CH2, PB5,  TIM_USE_OUTPUT_AUTO,  0, 0), // S2  D(1,5,5)
     DEF_TIM(TIM4, CH1, PB6,  TIM_USE_OUTPUT_AUTO,  0, 0), // S3  D(1,0,2)
     DEF_TIM(TIM4, CH2, PB7,  TIM_USE_OUTPUT_AUTO,  0, 0), // S4  D(1,3,2)
+#endif
 
     DEF_TIM(TIM2, CH2, PB3,  TIM_USE_OUTPUT_AUTO, 0, 0), // S5  D(1,6,3)
     DEF_TIM(TIM2, CH3, PB10, TIM_USE_OUTPUT_AUTO, 0, 0), // S6  D(1,1,3)

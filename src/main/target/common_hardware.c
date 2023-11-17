@@ -136,6 +136,10 @@
     #endif
 #endif
 
+#if !defined(MS56XX_ADDR)
+    #define MS56XX_ADDR 0x77
+#endif
+
 #if defined(USE_BARO_MS5607)
     #if !defined(MS5607_I2C_BUS)
         #define MS5607_I2C_BUS BARO_I2C_BUS

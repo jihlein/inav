@@ -49,3 +49,5 @@ float getFlightTime(void);
 float getArmTime(void);
 
 void fcReboot(bool bootLoader);
+
+float getdT(void);

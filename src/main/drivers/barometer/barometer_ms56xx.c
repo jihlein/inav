@@ -31,9 +31,6 @@
 
 #if defined(USE_BARO_MS5607) || defined(USE_BARO_MS5611)
 
-// MS56xx, Standard address 0x77
-#define MS56XX_ADDR             0x77
-
 #define CMD_RESET               0x1E // ADC reset command
 #define CMD_ADC_READ            0x00 // ADC read command
 #define CMD_ADC_CONV            0x40 // ADC conversion command
